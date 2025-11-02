@@ -79,6 +79,8 @@
 ### GitHub Actions & GitLab CI Showcase
 ![CI/CD Showcase](ci-showcase/ci-cd.png)
 
+![GitLab and GitHub CI/CD](ci-showcase/gitlab-and-github.png)
+
 **Platforms:** GitHub Actions, GitLab CI  
 **Stack:** Python Flask, Docker, pytest  
 **Features:** Automated testing, Docker builds, multi-platform support
