@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "grafana": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network", "host",
+        "-e", "GRAFANA_URL",
+        "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "grafana/mcp-grafana",
+        "--transport", "stdio",
+        "--disable-write"
+      ],
+      "envFile": "${workspaceFolder}/swarm-observability/mcp/env"
+    }
+  }
+}

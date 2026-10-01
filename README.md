@@ -103,6 +103,22 @@
 
 ---
 
+## Observability
+
+### Prometheus, Loki, Grafana
+
+Checkout is slow, and it is one of three things: the server is out of room, one container is about to hit its limit, or that service started logging errors. The name on the log line is the name on the chart.
+
+![Host pressure: CPU waves between 25% and 74% while disk and kernel OOM stay flat](swarm-observability/docs/screenshots/host-pressure-offer.png)
+
+CPU on this host moved between 25% and 74% in seven minutes. Disk and the kernel OOM counter did not. The pressure was the machine.
+
+**Stack:** Prometheus, cAdvisor, node-exporter, Loki, Promtail, Grafana, Grafana MCP
+
+**📁 [View the stack →](swarm-observability/)**
+
+---
+
 ## 🎓 Certifications
 
 ![AWS Solutions Architect Associate](certificates/png/AWS%20Certified%20Solutions%20Architect%20-%20Associate%20certificate.png)

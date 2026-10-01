@@ -1,0 +1,15 @@
+apiVersion: 1
+
+providers:
+  # JSON in dashboard-files is the source of truth. The UI can open a panel,
+  # but it cannot save over the file.
+  - name: git
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboard-files
+      foldersFromFilesStructure: true

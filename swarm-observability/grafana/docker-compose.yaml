@@ -1,0 +1,33 @@
+name: observability-grafana
+
+services:
+  grafana:
+    image: grafana/grafana:11.5.2
+    mem_limit: 1g
+    labels:
+      observability: "1"
+    environment:
+      GF_SERVER_ROOT_URL: http://127.0.0.1:3000
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./provisioning/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./dashboards:/etc/grafana/provisioning/dashboard-files:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      observability:
+        aliases: [grafana]
+    restart: unless-stopped
+
+networks:
+  observability:
+    external: true
+    name: observability
+
+volumes:
+  grafana_data:

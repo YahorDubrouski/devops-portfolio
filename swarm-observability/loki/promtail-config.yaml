@@ -1,0 +1,50 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+# A restart continues from the last shipped line instead of re-reading the files.
+positions:
+  filename: /promtail/positions.yaml
+
+clients:
+  # Local Compose DNS. On Swarm the name is <stack>_<service>, for example loki_loki.
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # The Docker API supplies the container name and the Swarm or Compose service.
+  # Tailing json-file logs cannot see those labels unless every node sets a log tag.
+  #
+  # This laptop file keeps only the observability-* Compose projects. A Swarm
+  # node drops that keep rule and also tails /var/log for kernel OOM lines.
+  # Historical syslog is older than Loki will accept, so it is not scraped here.
+  - job_name: containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+        # Laptop demo. Docker applies this before Promtail, so other containers
+        # on the machine are never read. On a cluster, remove the filter.
+        filters:
+          - name: label
+            values: ["observability=1"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/?(.*)'
+        target_label: container
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: (.+)
+        target_label: service
+      - source_labels: ['__meta_docker_container_label_com_docker_swarm_service_name']
+        regex: (.+)
+        target_label: service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        regex: (.+)
+        target_label: stack
+      - source_labels: ['__meta_docker_container_label_com_docker_stack_namespace']
+        regex: (.+)
+        target_label: stack
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: stream
+      - target_label: job
+        replacement: containerlogs
+      - target_label: node
+        replacement: ${NODE_NAME}

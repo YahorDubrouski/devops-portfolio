@@ -1,0 +1,22 @@
+# Sample lines so the log dashboard has something to draw.
+# Point Promtail at your own containers and this file can go.
+
+name: observability-demo
+
+services:
+  checkout:
+    image: busybox:1.36
+    command:
+      - sh
+      - -c
+      - 'while true; do echo "error: payment provider timeout"; sleep 15; done'
+    mem_limit: 32m
+    labels:
+      observability: "1"
+    networks: [observability]
+    restart: unless-stopped
+
+networks:
+  observability:
+    external: true
+    name: observability

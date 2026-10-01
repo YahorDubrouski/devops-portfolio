@@ -1,0 +1,50 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          node: local
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          node: local
+    metric_relabel_configs:
+      # One name on the series for Compose (this laptop) and Swarm (a cluster).
+      # A copied Loki label then works in PromQL without a second mapping.
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: (.+)
+        target_label: service
+      - source_labels: [container_label_com_docker_swarm_service_name]
+        regex: (.+)
+        target_label: service
+      - source_labels: [container_label_com_docker_compose_project]
+        regex: (.+)
+        target_label: stack
+      - source_labels: [container_label_com_docker_stack_namespace]
+        regex: (.+)
+        target_label: stack
+      - source_labels: [name]
+        regex: (.+)
+        target_label: container
+      - source_labels: [container_label_com_docker_swarm_task_name]
+        regex: (.+)
+        target_label: container
+      # Laptop demo only. On a cluster this keep rule goes away, so every service is graphed.
+      - source_labels: [stack]
+        regex: observability-.+
+        action: keep
+      - regex: 'container_label_com_docker_.*|id|name'
+        action: labeldrop
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          node: local

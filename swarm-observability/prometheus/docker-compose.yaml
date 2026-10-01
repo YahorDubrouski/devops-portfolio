@@ -1,0 +1,77 @@
+name: observability-prometheus
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.2
+    mem_limit: 384m
+    labels:
+      observability: "1"
+    privileged: true
+    command:
+      # Containers only. Host cgroups are node-exporter's job.
+      - --docker_only=true
+      # A container label can be a long description. Keep the names we graph.
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.swarm.service.name,com.docker.stack.namespace,com.docker.swarm.task.name,com.docker.compose.service,com.docker.compose.project
+      - --disable_metrics=percpu,sched,tcp,udp,hugetlb,referenced_memory,cpu_topology,resctrl
+      - --housekeeping_interval=10s
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      observability:
+        aliases: [cadvisor]
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    mem_limit: 128m
+    labels:
+      observability: "1"
+    pid: host
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /run/udev/data:/run/udev/data:ro
+    networks:
+      observability:
+        aliases: [node-exporter]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    # The named volume is root-owned. The image user cannot create the TSDB.
+    user: "0"
+    mem_limit: 1g
+    labels:
+      observability: "1"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=10GB
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      observability:
+        aliases: [prometheus]
+    restart: unless-stopped
+
+networks:
+  observability:
+    external: true
+    name: observability
+
+volumes:
+  prometheus_data:
